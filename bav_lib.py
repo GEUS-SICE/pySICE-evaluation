@@ -58,47 +58,6 @@ def stat_title(x,y,ax):
     return ax
 
 
-def multi_plot(data_out, 
-               sites = ['KAN_M', 'KAN_U'],sp1 = 4, sp2 = 2,
-               title = '', OutputFolder='figures/',
-               filename_out = 'plot',
-               name='pySICE',
-               **kwargs):
-
-    f1, ax = plt.subplots(sp1,sp2,figsize=(15, 15))
-    f1.subplots_adjust(hspace=0.2, wspace=0.1,
-                       left = 0.08 , right = 0.95 ,
-                       bottom = 0.2 , top = 0.9)
-    count = -1
-    for site in sites:
-        print(site)
-        count = count+1
-        i,j = np.unravel_index(count, ax.shape)
-        tmp = data_out[data_out.station==site]
-        
-        ax[i,j].plot(tmp.date,tmp.PROMICE_alb,label='PROMICE', **kwargs)
-        ax[i,j].plot(tmp.date,tmp.BBA_emp,label='Empirical', **kwargs)
-        ax[i,j].plot(tmp.date,tmp.albedo_bb_planar_sw,label=name, **kwargs)                
-        ax[i,j].plot(tmp.loc[tmp.diagnostic_retrieval==3, 'date'],
-                     tmp.loc[tmp.diagnostic_retrieval==3, 'albedo_bb_planar_sw'],
-                     'k', label='mixed', marker='+', linestyle='None')                
-        ax[i,j].grid(True)
-        ax[i,j].set_title(site)
-        ax[i,j].set_xlim([datetime.date(2017, 1, 1), datetime.date(2020, 1, 1)])    
-        ax[i,j].xaxis.set_major_locator(years)
-        ax[i,j].xaxis.set_major_formatter(years_fmt)
-        ax[i,j].xaxis.set_minor_locator(months)
-        ax[i,j].set_xlabel("")
-            
-        if count<len(sites)-3:
-            ax[i,j].set_xticklabels("")
-                
-    handles, labels = ax[0,0].get_legend_handles_labels()
-    f1.legend(handles, labels, loc='upper center')
-    f1.text(0.5, 0.1, 'Year', ha='center', size = 20)
-    f1.text(0.02, 0.5, title, va='center', rotation='vertical', size = 20)
-    f1.savefig(OutputFolder+filename_out+'.png')
-    
 #%%
 def OutlookRaster(var,title):
     l,b,r,t = var.bounds
