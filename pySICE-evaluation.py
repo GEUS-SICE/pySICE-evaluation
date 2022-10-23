@@ -23,8 +23,9 @@ data_org['cloud'] = data_org.PROMICE_cloud_index
 data_org['station'] = data_org.site
 data_org['PROMICE_alb'] = data_org.albedo_PROMICE
 data_org[data_org==-999] = np.nan
-path_to_file_1 = 'data/PROMICE_jason_all_out.csv'
+
 name_1='pySICEv2.1'
+path_to_file_1 = 'data/PROMICE_jason_all_out_'+name_1+'.csv'
 isnow_label = {
     1: "clean snow",
     2: "polluted snow",
@@ -53,7 +54,11 @@ data_out.loc[data_out.grain_diameter<0.07,'albedo_bb_planar_sw'] = np.nan
 data_out.loc[data_out.albedo_bb_planar_sw>1,'albedo_bb_planar_sw'] = np.nan
 
 import matplotlib
+# %% scatter
 f1, ax = plt.subplots(1,1)
+f1.subplots_adjust(hspace=0.2, wspace=0.1,
+                   left = 0.15 , right = 0.95 ,
+                   bottom = 0.15 , top = 0.82)
 msk=data_out[['albedo_bb_planar_sw', 'albedo_PROMICE']].notnull().all(1)
 x = data_out.loc[msk, 'albedo_PROMICE']
 y = data_out.loc[msk, 'albedo_bb_planar_sw']
@@ -64,13 +69,13 @@ plt.plot([0.2, 1], [0.2, 1],'k')
 cbar = plt.colorbar()
 cbar.set_label('Number of observations in bin')
 plt.xlabel('PROMICE albedo')
-plt.ylabel('pySICEv2.1 albedo')
+plt.ylabel(name_1 +' albedo')
 bl.stat_title(data_out['albedo_bb_planar_sw'], data_out['PROMICE_alb'],ax)
 ax.set_xlim([0.2, 1])    
 ax.set_ylim([0.2, 1])   
-f1.savefig('figures/scatter.png')
+f1.savefig('figures/scatter_'+name_1+'.png')
 
-#  Plot for each station
+# %%  Plot for each station
 data_out['date'] = pd.to_datetime(data_out[['year','month','day','hour','minute','second']])
 data_out = data_out.set_index(['station','date'], drop=False)
 from matplotlib.patches import Rectangle
@@ -130,14 +135,14 @@ def multi_plot(data_out,
 multi_plot(data_out, title = 'Albedo (-)',
               sites =['KAN_L','KAN_M','KAN_U','KPC_L','KPC_U','SCO_L','SCO_U','EGP'],
               OutputFolder = 'figures/', 
-              filename_out='PROMICE_comp_1',
-              name='pySICEv2.1')
+              filename_out='PROMICE_comp_1_'+name_1,
+              name=name_1)
 
 multi_plot(data_out, title='Albedo (-)',
               sites = ['QAS_L', 'QAS_U', 'TAS_L', 'TAS_A', 'THU_L', 'THU_U', 'UPE_L', 'UPE_U'],
               OutputFolder = 'figures/', 
-              filename_out='PROMICE_comp_2',
-              name='pySICEv2.1')
+              filename_out='PROMICE_comp_2_'+name_1,
+              name=name_1)
 
 # %% SSA evaluation
 import scipy.io
@@ -175,12 +180,15 @@ SSA_obs_d = SSA_obs_d.set_index('time')
 df_EGP = data_out.loc['EGP'].copy()
 df_EGP.loc[df_EGP.grain_diameter<0.07, ['grain_diameter', 'snow_specific_area']] = np.nan
 
+MD = (-SSA_obs_d.SSA.resample('D').mean() + df_EGP.snow_specific_area.resample('D').mean()).mean()
+RMSD = np.sqrt(((SSA_obs_d.SSA.resample('D').mean() - df_EGP.snow_specific_area.resample('D').mean())**2).mean())
+
 fig, ax = plt.subplots(3,1,figsize=(10,15))
 fig.subplots_adjust(hspace=0.3, wspace=0.1,
                    left = 0.08 , right = 0.99 ,
                    bottom = 0.06 , top = 0.96)
 for i, yr in enumerate(range(2017,2020)):
-    df_EGP.loc[str(yr)].snow_specific_area.plot(ax=ax[i], label='pySICEv2.1',
+    df_EGP.loc[str(yr)].snow_specific_area.plot(ax=ax[i], label=name_1,
                                            marker='o', linestyle='None')
     
     SSA_obs_d.loc[str(yr)].SSA.plot(ax=ax[i], label='Observations',
@@ -188,18 +196,22 @@ for i, yr in enumerate(range(2017,2020)):
     ax[i].grid()
     ax[i].set_ylabel('SSA (m2 kg-1)')
     ax[i].set_xlabel('')
+    ax[i].set_ylim(0,90)
     ax[i].set_xlim(pd.to_datetime(str(yr)+'-05-01'), pd.to_datetime(str(yr)+'-08-15'))
 handles, labels = ax[0].get_legend_handles_labels()
 fig.legend(handles, labels, ncol=4, loc='upper right')
-fig.suptitle('EastGRIP')
-fig.savefig('figures/SSA_EGP.png')
+fig.suptitle('EastGRIP: MD = %0.2f  RMSD = %0.2f'%(MD, RMSD))
+fig.savefig('figures/SSA_EGP_'+name_1+'.png')
+
+MD = (-SSA_obs_d.gd_mm.resample('D').mean() + df_EGP.grain_diameter.resample('D').mean()).mean()
+RMSD = np.sqrt(((SSA_obs_d.gd_mm.resample('D').mean() - df_EGP.grain_diameter.resample('D').mean())**2).mean())
 
 fig, ax = plt.subplots(3,1,figsize=(10,15))
 fig.subplots_adjust(hspace=0.3, wspace=0.1,
                    left = 0.08 , right = 0.99 ,
                    bottom = 0.06 , top = 0.96)
 for i, yr in enumerate(range(2017,2020)):
-    df_EGP.loc[str(yr)].grain_diameter.plot(ax=ax[i], label='pySICEv2.1',
+    df_EGP.loc[str(yr)].grain_diameter.plot(ax=ax[i], label=name_1,
                                            marker='o', linestyle='None')
     
     SSA_obs_d.loc[str(yr)].gd_mm.plot(ax=ax[i], label='Observations',
@@ -207,6 +219,7 @@ for i, yr in enumerate(range(2017,2020)):
     ax[i].grid()
     ax[i].set_ylabel('d_opt (mm)')
     ax[i].set_xlabel('')
+    ax[i].set_ylim(0,0.5)
     ax[i].set_xlim(pd.to_datetime(str(yr)+'-05-01'), pd.to_datetime(str(yr)+'-08-15'))
     # lab=[l.get_text()[5:] for l in ax[i].get_xticklabels()]
     # ax[i].set_xticks([l for l in ax[i].get_xticks()])
@@ -214,5 +227,5 @@ for i, yr in enumerate(range(2017,2020)):
     # ax[i].set_title(str(yr))
 handles, labels = ax[0].get_legend_handles_labels()
 fig.legend(handles, labels, ncol=4, loc='upper right')
-fig.suptitle('EastGRIP')
-fig.savefig('figures/GD_EGP.png')
+fig.suptitle('EastGRIP: MD = %0.2f  RMSD = %0.2f'%(MD, RMSD))
+fig.savefig('figures/GD_EGP_'+name_1+'.png')

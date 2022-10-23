@@ -15,8 +15,8 @@ import matplotlib.pyplot as plt
 #%%
 def load_cook_data():
     print('loading Cook\'s field measurements')
-    data_cook = pd.concat((pd.read_csv('validation/data/Cook_data/Hbio_albedo_JB.csv'), 
-                           pd.read_csv('validation/data/Cook_data/Lbio_albedo_JB.csv')),
+    data_cook = pd.concat((pd.read_csv('data/Cook_data/Hbio_albedo_JB.csv'), 
+                           pd.read_csv('data/Cook_data/Lbio_albedo_JB.csv')),
                           axis=1)
     data_cook=data_cook.drop( columns='Unnamed: 0' )
     
@@ -27,7 +27,7 @@ def load_cook_data():
     labels = pd.DataFrame()
     labels[['bio_load', 'day', 'month', 'sitename']] = pd.DataFrame(tmp[0].tolist(), index= tmp.index)
     labels['samplename'] = labels['bio_load'] +'_'+labels['day'] +'_'+labels['month'] + '_17_'++labels['sitename'] 
-    WL = pd.read_csv('validation/data/Cook_data/Wavlengths.csv',header=None).values
+    WL = pd.read_csv('data/Cook_data/Wavlengths.csv',header=None).values
     lambda_names = ['lambda_' + str(x[0]) for x in WL]
     
     data_cook=data_cook.transpose()
@@ -44,7 +44,7 @@ def load_cook_data():
     
     print('Loading Cook\'s metadata') 
     from openpyxl import load_workbook
-    wb = load_workbook(filename='validation/data/Cook_data/metadata_JB.xlsx', 
+    wb = load_workbook(filename='data/Cook_data/metadata_JB.xlsx', 
                        read_only=True)
     ws = wb['Sheet1']
     
